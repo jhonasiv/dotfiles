@@ -57,7 +57,7 @@ source $ZDOTDIR/antigen.zsh
 antigen use oh-my-zsh
 
 antigen bundle command-not-found
-antigen bundle zdharma/fast-syntax-highlighting
+antigen bundle zdharma-continuum/fast-syntax-highlighting
 antigen bundle qoomon/zsh-lazyload
 antigen bundle zsh-users/zsh-autosuggestions
 
@@ -121,7 +121,7 @@ zle -N fancy-ctrl-z
 bindkey '^Z' fancy-ctrl-z
 
 export EDITOR=nvim
-source $HOME/.profile
+#source $HOME/.profile
 
 # Inicializa FZF
 [ -f /usr/share/fzf/completion.zsh ] && source /usr/share/fzf/completion.zsh
@@ -163,14 +163,8 @@ source $HOME/.config/zsh/exa-aliases.zsh
 # FZF tab configs
 source $HOME/.config/zsh/fzf-tab.zsh
 
-# Setup autoenv
-source $HOME/.config/zsh/.aenv.sh
-autosetup_aenv
-
 # Use bat to colorize man pages
 export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 
 # Set brave as default browser
 export BROWSER="brave-browser"
-
-source $HOME/.cargo/env
