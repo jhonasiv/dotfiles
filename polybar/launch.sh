@@ -1,8 +1,7 @@
 #! /usr/bin/zsh
 
-# Terminate already running bar instance
-polybar-msg cmd quit
+let "mon = $MONITOR + 2"
 
-# Launch bar1
-echo "---" | tee -a /tmp/polybar1.log
-polybar bar1 2>&1 | tee -a /tmp/polybar1.log & disown
+monitor=$(xrandr --listmonitors | sed "${mon}q;d" | cut -d' ' -f6)
+
+MONITOR=$monitor polybar --reload mainbar &
