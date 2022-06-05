@@ -8,10 +8,35 @@ hc() {
 
 hc emit_hook reload
 
-xsetroot -solid '#5A8E3A'
-
 # remove all existing keybindings
 hc keyunbind --all
+
+# ----------------
+# AUTOSTART APPLICATIONS
+# ----------------
+killall sxhkd
+sxhkd -t 2 -a Super_L &
+
+# Setup compositor
+picom --experimental-backends -b
+
+# Setup wallpaper
+feh --bg-fill --randomize $HOME/wallpapers
+
+# ----------------
+# SETTINGS
+# ----------------
+
+# Focus follows mouse
+hc set focus_follows_mouse true
+
+# Disable swap monitors when changing tag
+hc set swap_monitors_to_get_tag false
+
+hc set smart_window_surroundings 1
+
+# Turn num lock on by default
+numlockx &
 
 # keybindings
 # if you have a super key you will be much happier with Mod set to Mod4
@@ -177,17 +202,14 @@ hc set tree_style '╾│ ├└╼─┐'
 # unlock, just to be sure
 hc unlock
 
-# do multi monitor setup here, e.g.:
+hc detect_monitors
 
-hc set_monitors 1920x1080+0+0
-# or simply:
-# hc detect_monitors
-
-# Setup the panel for each monitor
-panel=~/.config/polybar/launch.sh
-[ -x "$panel" ] || panel=/etc/xdg/herbstluftwm/panel.sh
+# Terminate already running bar instance
+polybar-msg cmd quit
+# Polybar launch file
+panel="$XDG_CONFIG_HOME/polybar/launch.sh"
 for monitor in $(hc list_monitors | cut -d: -f1) ; do
     # start it on each monitor
     MONITOR=$monitor "$panel" "$monitor" &
+    hc pad $monitor 24 0 0 0
 done
-
