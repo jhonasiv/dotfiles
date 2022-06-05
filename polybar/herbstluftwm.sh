@@ -22,12 +22,10 @@ herbstclient --idle "tag_*" 2>/dev/null | {
                 case ${i:0:1} in
                     '.')
                         # the tag is empty
-                        # TODO Add your formatting tags
                         ;;
                     '+')
                         # tag is viewed on the specified monitor but this monitor is not focused
-                        text="%{T3}🖥%{T} ${i:1}"
-                        # text="%{F#a485dd}%{T3}🖥%{T} ${i:1}"
+                        text="%{R}%{T3} 🖥%{T} ${i:1} %{R}"
                         ;;
                     ':')
                         # tag is not empty
@@ -35,21 +33,19 @@ herbstclient --idle "tag_*" 2>/dev/null | {
                         ;;
                     '#')
                         # tag is viewed on the specified MONITOR and it is focused
-                        text="%{T3}🖥%{T} ${i:1}"
+                        text="%{R}%{T3} 🖥%{T} ${i:1} %{R}"
                         ;;
                     '-')
                         # the tag is viewed on a different MONITOR, but this monitor is not focused.
-                        # TODO Add your formatting tags
-                        text="%{F#f7f66f}%{T3}🖥%{T} %{F-}${i:1}"
+                        text="%{T3}🖥%{T} %{F-}${i:1}"
                         ;;
                     '%')
                         # the tag is viewed on a different MONITOR and it is focused.
-                        # TODO Add your formatting tags
-                        text="%{F#f7f66f}%{T3}🖥%{T}%{F-} ${i:1}"
+                        text="%{T3}🖥%{T}%{F-} ${i:1}"
                         ;;
                     '!')
                         # the tag contains an urgent window
-                        # TODO Add your formatting tags
+                        text="%{B#ffc040}%{F#11121D}%{T3} %{T} ${i:1}"
                         ;;
                 esac
 
