@@ -1,8 +1,3 @@
-if empty(glob('~/.local/share/nvim/site/autoload/plug.vim')) then
-        curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-	autocmd VimEnter * PlugInstall --sync | source $XDG_CONFIG_HOME/nvim/init.vim
-endif
-
 function! Cond(cond, ...)
   let opts = get(a:000, 0, {})
   return a:cond ? opts : extend(opts, { 'on': [], 'for': [] })
@@ -31,4 +26,3 @@ call plug#begin()
         Plug 'easymotion/vim-easymotion', Cond(!exists('g:vscode'))
         Plug 'unblevable/quick-scope', Cond(!exists('g:vscode'))
 call plug#end()
-
