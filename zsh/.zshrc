@@ -157,6 +157,10 @@ export XDG_CONFIG_HOME=$HOME/.config
 
 alias tmuxx='tmux -f $XDG_CONFIG_HOME/tmux/tmux.conf'
 
+alias vim='nvim'
+
+alias hc='herbstclient "$@"'
+
 # EXA aliases
 source $HOME/.config/zsh/exa-aliases.zsh
 
