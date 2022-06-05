@@ -1,0 +1,87 @@
+# Change keyboard layout to us or br
+{ISO_Level3_Shift, Alt_R}
+	/home/jhonas/.config/keymaps/keyboard_switch.sh
+
+# Reload sxhkdrc
+super + a; s; r
+	killall sxhkd && sxhkd &
+
+# Quit hlwm
+super + shift + q
+	herbstclient quit
+
+# Reload hlwm
+super + r
+	herbstclient reload
+
+# Close an application
+super + q
+	herbstclient close
+
+# Opens up the terminal
+super + Return
+	$TERMINAL
+
+# Focus the client on the left
+super + {h, Left}
+	herbstclient focus left
+
+# Focus the client on the right
+super + {l, Right}
+	herbstclient focus right
+
+# Focus the client above
+super + {k, Up}
+	herbstclient focus up
+
+# Focus the client below
+super + {j, Down}
+	herbstclient focus down
+
+# Move the client to the left
+super + m; {h, Left}
+	herbstclient shift left
+
+# Move the client to the right
+super + m; {l, Right}
+	herbstclient shift right
+
+# Move the client above
+super + m; {k, Up}
+	herbstclient shift up
+
+# Move the client below
+super + m; {j, Down}
+	herbstclient shift down
+
+# Create an empty frame at the bottom
+super + f; {h,j,k,l}
+	herbstclient split {left,bottom,top,right} 0.5
+
+# Remove a frame
+super + f; r
+	herbstclient remove
+
+# Explode current frame into subframes
+super + f; space
+	herbstclient split explode
+
+# Resize frames and floating clients (Press ESC to stop)
+super + s: {h,j,k,l}
+	herbstclient resize {left,down,up,right} +0.02
+
+# Resize frames and floating clients (Press ESC to stop)
+super + s: {Left, Down, Up, Right}
+	herbstclient resize {left,down,up,right} +0.02
+
+# Move between tags
+super + {1-9}
+	herbstclient use_index {0-8}
+
+# Move tag index
+super + shift + {1-9}
+	herbstclient move_index {0-8}
+
+# Open brave browser
+super + a; b
+	brave
