@@ -172,3 +172,6 @@ export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 
 # Set brave as default browser
 export BROWSER="brave-browser"
+
+# Add ~/.local/bin to PATH
+export PATH=$PATH:$HOME/.local/bin

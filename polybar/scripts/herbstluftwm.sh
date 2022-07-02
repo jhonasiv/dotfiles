@@ -10,6 +10,15 @@ for (( i=0; i<$((${#MONITOR_LIST[@]})); i++ )); do
   [[ ${MONITOR_LIST[${i}]} == "$MONITOR" ]] && MON_IDX="$i"
 done;
 
+green="#9ece6a"
+blue="#7aa2f7"
+orange="#e0af68"
+foreground="#c0caf5"
+lightgray="#565c64"
+red="#e06c75"
+disabled="#414868"
+purple="#a485dd"
+
 herbstclient --idle "tag_*" 2>/dev/null | {
 
     while true; do
@@ -22,35 +31,36 @@ herbstclient --idle "tag_*" 2>/dev/null | {
                 case ${i:0:1} in
                     '.')
                         # the tag is empty
+                        text="%{F${disabled}}"
                         ;;
                     '+')
                         # tag is viewed on the specified monitor but this monitor is not focused
-                        text="%{R}%{T3} 🖥%{T} ${i:1} %{R}"
+                        text="%{F${green}}"
                         ;;
                     ':')
                         # tag is not empty
-                        text="%{F#565c64}%{T4}%{T} ${i:1}"
+                        text="%{F${blue}}"
                         ;;
                     '#')
                         # tag is viewed on the specified MONITOR and it is focused
-                        text="%{R}%{T3} 🖥%{T} ${i:1} %{R}"
+                        text="%{F${green}}"
                         ;;
                     '-')
                         # the tag is viewed on a different MONITOR, but this monitor is not focused.
-                        text="%{T3}🖥%{T} %{F-}${i:1}"
+                        text="%{F${orange}}"
                         ;;
                     '%')
                         # the tag is viewed on a different MONITOR and it is focused.
-                        text="%{T3}🖥%{T}%{F-} ${i:1}"
+                        text="%{F${orange}}"
                         ;;
                     '!')
                         # the tag contains an urgent window
-                        text="%{B#ffc040}%{F#11121D}%{T3} %{T} ${i:1}"
+                        text="%{F${red}}"
                         ;;
                 esac
 
                 # focus the monitor of the current bar before switching tags
-                [ -z $text ] || echo "%{A1:herbstclient focus_monitor ${MON_IDX}; herbstclient use ${i:1}:} ${text} %{A -u -o F- B-}"
+                [ -z $text ] || echo "%{A1:herbstclient focus_monitor ${MON_IDX}; herbstclient use ${i:1}:} ${text} %{A -u}"
             done
 
             # reset foreground and background color to default

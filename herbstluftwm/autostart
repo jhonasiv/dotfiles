@@ -33,14 +33,15 @@ hc set focus_follows_mouse true
 # Disable swap monitors when changing tag
 hc set swap_monitors_to_get_tag false
 
-hc set smart_window_surroundings 1
+# Remove border for single windows
+hc set smart_window_surroundings on
 
 # Turn num lock on by default
 numlockx &
 
 # keybindings
 # if you have a super key you will be much happier with Mod set to Mod4
-Mod=Mod1    # Use alt key as the main modifier
+#Mod=Mod1    # Use alt key as the main modifier
 
 hc keybind $Mod-Shift-q quit
 hc keybind $Mod-Shift-r reload
@@ -142,13 +143,13 @@ hc set frame_border_normal_color '#101010cc'
 hc set frame_bg_normal_color '#565656aa'
 hc set frame_bg_active_color '#345F0Caa'
 hc set frame_border_width 1
-hc set always_show_frame on
+hc set always_show_frame off
 hc set frame_bg_transparent on
 hc set frame_transparent_width 5
 hc set frame_gap 4
 
 hc attr theme.title_height 15
-hc attr theme.title_when always
+hc attr theme.title_when multiple_tabs
 hc attr theme.title_font 'Dejavu Sans:pixelsize=12'  # example using Xft
 # hc attr theme.title_font '-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*'
 hc attr theme.title_depth 3  # space below the title's baseline
@@ -180,8 +181,6 @@ hc attr theme.background_color '#141414'
 
 hc set window_gap 0
 hc set frame_padding 0
-hc set smart_window_surroundings off
-hc set smart_frame_surroundings on
 hc set mouse_recenter_gap 0
 
 # rules
@@ -207,9 +206,9 @@ hc detect_monitors
 # Terminate already running bar instance
 polybar-msg cmd quit
 # Polybar launch file
-panel="$XDG_CONFIG_HOME/polybar/launch.sh"
+panel="$XDG_CONFIG_HOME/polybar/scripts/launch.sh"
 for monitor in $(hc list_monitors | cut -d: -f1) ; do
     # start it on each monitor
     MONITOR=$monitor "$panel" "$monitor" &
-    hc pad $monitor 24 0 0 0
+    hc pad $monitor 36 0 0 0
 done

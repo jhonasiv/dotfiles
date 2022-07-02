@@ -24,19 +24,19 @@ super + Return
 
 # Focus the client on the left
 super + {h, Left}
-	herbstclient focus left
+    herbstclient focus left
 
 # Focus the client on the right
 super + {l, Right}
-	herbstclient focus right
+    herbstclient focus right
 
 # Focus the client above
 super + {k, Up}
-	herbstclient focus up
+    [[ $(herbstclient layout | cut -d":" -f1 | cut -d" " -f2) = "max" ]] && herbstclient cycle_all +1 || herbstclient focus up
 
 # Focus the client below
 super + {j, Down}
-	herbstclient focus down
+    [[ $(herbstclient layout | cut -d":" -f1 | cut -d" " -f2) = "max" ]] && herbstclient cycle_all -1 || herbstclient focus down
 
 # Move the client to the left
 super + m; {h, Left}
@@ -59,7 +59,7 @@ super + f; {h,j,k,l}
 	herbstclient split {left,bottom,top,right} 0.5
 
 # Remove a frame
-super + f; r
+super + f; q
 	herbstclient remove
 
 # Explode current frame into subframes
@@ -82,6 +82,23 @@ super + {1-9}
 super + shift + {1-9}
 	herbstclient move_index {0-8}
 
+# Cycle through layouts
+super + ctrl + space
+   herbstclient cycle_layout +1 
+      
+
 # Open brave browser
 super + a; b
 	brave
+
+# Print screen
+Print
+    flameshot gui
+
+# Show keybindings
+super + F1
+    awk '/^[a-z]/ && last \{print "",last,"\t",$0,""\} \{last=""\} /^[# ]/\{last=$0\}' ~/.config/sxhkd/sxhkdrc | sed 's/#\ //'| column -t -s $'\t' | rofi -dmenu -p Keybindings -i -theme-str 'window \{width: 50%;\}'
+
+# Applications launcher
+super + space
+    rofi -show drun
