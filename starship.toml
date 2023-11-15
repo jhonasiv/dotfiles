@@ -1,0 +1,46 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+add_newline = true
+format = '''$directory$cmd_duration $rust$ruby$git_branch$git_state$git_status
+\($username$hostname\) $character
+'''
+
+[character] # The name of the module we are configuring is 'character'
+success_symbol = '[➜](bold green)' # The 'success_symbol' segment is being set to '➜' with the color 'bold green'
+
+[cmd_duration]
+disabled=false
+format = ' took [$duration]($style) '
+min_time_to_notify = 1_000
+
+[directory]
+format = '[$path]($style)/[$read_only]($read_only_style)'
+style = '#5fcf96'
+truncate_to_repo = true
+truncation_length = 8
+truncation_symbol = ".../"
+
+[git_branch]
+only_attached = true
+style = "#9665e9"
+
+[git_status]
+style = "#e9c17d"
+
+[hostname]
+ssh_only = true
+format = ' in [$ssh_symbol$hostname]($style)'
+
+[ruby]
+format = 'via [$symbol]($style)'
+
+[rust]
+style = 'bold orange'
+format = 'via [$symbol]($style)'
+
+[username]
+style_user = '#5fa0ef'
+style_root = 'orange bold'
+format = '[$user]($style)'
+disabled = false
+show_always = true
