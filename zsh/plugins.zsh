@@ -8,6 +8,7 @@ zpm load zpm-zsh/zpm-readme
 zpm load zpm-zsh/zpm-info
 
 zpm load agkozak/zsh-z,async
+source $ZDOTDIR/plugins/zsh-z.zsh
 #zpm load zsh-users/zsh-history-substring-search,async,
 
 # Auto suggestions
@@ -17,3 +18,5 @@ source $ZDOTDIR/plugins/zsh-autosuggestions.zsh
 zpm load zdharma-continuum/fast-syntax-highlighting
 zpm load zsh-users/zsh-history-substring-search
 source $ZDOTDIR/plugins/zsh-history-substring-search.zsh
+
+zpm load olets/zsh-abbr

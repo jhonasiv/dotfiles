@@ -51,10 +51,12 @@ zstyle ':completion:*:*:cd:*' tag-order local-directories directory-stack path-d
 zstyle ':completion:*' expand prefix suffix
 zstyle ':completion:*' group-name ''
 zstyle ':completion:*' ignore-parents parent pwd ..
+zstyle ':completion:*:nvim:*' ignored-patterns '(*.(zwc))'
+zstyle ':completion:*:nvim:*' file-patterns "%p:globbed-files" "*(-/):directories" "*:all-files"
 zstyle ':completion:*' insert-unambiguous true
 zstyle ':completion:*' insert-tab true
 zstyle ':completion:*' matcher-list 'r:|[._-]=** r:|=**' 'm:{[:lower:]}={[:upper:]} m:{[:lower:][:upper:]}={[:upper:][:lower:]}' 'l:|=* r:|=*'
-zstyle ':completion:*' max-errors 6 numeric
+zstyle ':completion:*' max-errors 2 numeric
 zstyle ':completion:*' menu select=3
 zstyle ':completion:*' original false
 zstyle ':completion:*' preserve-prefix '//[^/]##/'
@@ -65,11 +67,10 @@ zstyle ':completion:*' verbose true
 
 
 # Prettier text
-zstyle ':completion:*' format 'Type: %d'
-zstyle ':completion:*' list-colors ''
+zstyle ':completion:*' format '%F{green}--- %d ---%f'
 zstyle ':completion:*' list-prompt '%SAt %p: Hit TAB for more, or the character to insert%s'
-zstyle ':completion:*:*:*:*:descriptions' format '%F{green}-- %d --%f'
-zstyle ':completion:*:*:*:*:corrections' format '%F{yellow}!- %d (errors: %e) -!%f'
+zstyle ':completion:*:*:-command-:*:*' format "%F{blue} --- %d ---%f"
+zstyle ':completion:*:*:*:*:corrections' format '%F{yellow}--- %d (errors: %e) ---%f'
 zstyle ':completion:*:messages' format ' %F{purple} -- %d --%f'
 zstyle ':completion:*:warnings' format ' %F{red}-- no matches found --%f'
 zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
