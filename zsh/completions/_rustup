@@ -1193,3 +1193,4 @@ _rustup__which_commands() {
 }
 
 _rustup "$@"
+

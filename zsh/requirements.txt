@@ -1,4 +1,0 @@
-fzf
-fasd
-bat
-exa
