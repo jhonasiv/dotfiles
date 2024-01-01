@@ -1,1 +1,3 @@
 zsh/antigen/*
+dotset-bin/target
+dotset-bin/*.lock

@@ -1,16 +1,15 @@
 use std::{
-    fmt::format,
+    fmt::{Debug, Display},
     fs::{create_dir, remove_dir_all, remove_file, File},
     io::Write,
-    ops::Deref,
     os::unix::fs::symlink,
-    path::{Path, PathBuf},
+    path::PathBuf,
 };
 
 use dotset::*;
 use walkdir::WalkDir;
 
-use crate::{NerdFonts, Starship};
+use crate::Starship;
 
 #[derive(Clone)]
 pub struct Zpm {
@@ -25,8 +24,22 @@ impl Zpm {
     }
 }
 
+impl Display for Zpm {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "ZPM")
+    }
+}
+
+impl Debug for Zpm {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "ZPM {{ {} }} ", self.zpm_destination.display())
+    }
+}
+
+impl DisplayablePackage for Zpm {}
+
 impl Package for Zpm {
-    fn install(&self) {
+    fn install(&self, _interactive: bool) {
         let clone_options = CloneOptionsBuilder::new().recursive(true).build();
         default_clone(
             "https://github.com/zpm-zsh/zpm",
@@ -36,7 +49,7 @@ impl Package for Zpm {
         .unwrap();
     }
 
-    fn uninstall(&self) {
+    fn uninstall(&self, _interactive: bool) {
         remove_dir_all(&self.zpm_destination).unwrap()
     }
 
@@ -45,19 +58,11 @@ impl Package for Zpm {
     }
 
     fn is_installed(&self) -> bool {
-        which("zpm").is_some()
+        which("zpm").is_some() || self.zpm_destination.exists()
     }
 
     fn name(&self) -> String {
         String::from("zpm")
-    }
-}
-
-impl Deref for Zpm {
-    type Target = dyn Package;
-
-    fn deref(&self) -> &Self::Target {
-        self as &dyn Package
     }
 }
 
@@ -97,15 +102,36 @@ impl Zsh {
     }
 }
 
+impl Display for Zsh {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "ZSH")
+    }
+}
+
+impl Debug for Zsh {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let config = self.config.clone().unwrap_or(PathBuf::new());
+        let dst = self.destination.clone().unwrap_or(PathBuf::new());
+        write!(
+            f,
+            "ZSH {{ config: {}, dst: {} }}",
+            config.display(),
+            dst.display()
+        )
+    }
+}
+
+impl DisplayablePackage for Zsh {}
+
 impl Package for Zsh {
-    fn dependencies(&self) -> Vec<Box<dyn Package>> {
+    fn dependencies(&self) -> Vec<Box<dyn DisplayablePackage>> {
         self.dependencies
             .clone()
             .into_iter()
             .map(|dep| match dep {
-                ZshDependencies::ZPM(zpm) => Box::new(zpm) as Box<dyn Package>,
+                ZshDependencies::ZPM(zpm) => Box::new(zpm) as Box<dyn DisplayablePackage>,
                 ZshDependencies::Starship(starship) => {
-                    Box::new(starship) as Box<dyn Package>
+                    Box::new(starship) as Box<dyn DisplayablePackage>
                 },
             })
             .collect()
@@ -119,11 +145,11 @@ impl Package for Zsh {
         which("zsh").is_some()
     }
 
-    fn install(&self) {
+    fn install(&self, _interactive: bool) {
         self.selector.install("zsh").unwrap();
     }
 
-    fn post_install(&self) {
+    fn post_install(&self, _interactive: bool) {
         match (&self.config, &self.destination) {
             (Some(conf), Some(dst)) => {
                 if !dst.exists() {
@@ -138,22 +164,15 @@ impl Package for Zsh {
         Self::create_base_zshenv_file();
         let zsh_path = which("zsh").unwrap();
         chsh(zsh_path.as_str(), None);
+        println!("ZSH is now set as your default shell. A logout is necessary for it to take effect");
     }
 
     fn update(&self) {
         self.selector.update("zsh").unwrap();
     }
 
-    fn uninstall(&self) {
+    fn uninstall(&self, _interactive: bool) {
         self.selector.uninstall("zsh").unwrap();
-    }
-}
-
-impl Deref for Zsh {
-    type Target = dyn Package;
-
-    fn deref(&self) -> &Self::Target {
-        self as &dyn Package
     }
 }
 
@@ -166,7 +185,7 @@ fn link_zsh_configurations(folder: &PathBuf, dst_prefix: &PathBuf) {
         }
         let entry_relative_path = path.strip_prefix(&folder).unwrap();
         let destination = dst_prefix.join(entry_relative_path);
-        println!("linking {} to {}", path.display(), &destination.display());
+        dbg!("linking {} to {}", path.display(), &destination.display());
         let destination_path = PathBuf::from(&destination);
         if destination_path.exists() {
             remove_file(&destination).unwrap();
@@ -176,7 +195,7 @@ fn link_zsh_configurations(folder: &PathBuf, dst_prefix: &PathBuf) {
         if entry_relative_path.is_some_and(|p| p.is_dir())
             && destination_path_parent.is_some_and(|p| !p.exists())
         {
-            println!(
+            dbg!(
                 "folder {} does not exist, but it's required by {}. Creating it...",
                 entry_relative_path.unwrap().display(),
                 destination.display()
@@ -186,4 +205,3 @@ fn link_zsh_configurations(folder: &PathBuf, dst_prefix: &PathBuf) {
         symlink(path, destination).unwrap();
     }
 }
-
