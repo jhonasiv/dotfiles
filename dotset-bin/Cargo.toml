@@ -7,5 +7,5 @@ edition = "2021"
 
 [dependencies]
 dotset = { path = "../../dev/dotset" }
-walkdir = "2.4"
+git2 = "0.18"
 clap = { version = "4.4", features = ["derive"] }

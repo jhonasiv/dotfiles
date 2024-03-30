@@ -39,19 +39,15 @@ impl NerdFonts {
     }
 }
 
-impl Display for NerdFonts {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "NerdFont {}", self.font_name())
+impl DisplayablePackage for NerdFonts {
+    fn display(&self) -> String {
+        format!("NerdFont {}", self.font_name())
+    }
+
+    fn debug(&self) -> String {
+        format!("NerdFont {}", self.font_name())
     }
 }
-
-impl Debug for NerdFonts {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "NerdFont {{ {} }}", self.font_name())
-    }
-}
-
-impl DisplayablePackage for NerdFonts {}
 
 impl Package for NerdFonts {
     fn update(&self) {

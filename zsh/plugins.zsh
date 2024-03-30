@@ -4,9 +4,6 @@ source $ZDOTDIR/.zpm/zpm.zsh
 zpm load @gh/zpm-zsh/zpm-readme
 zpm load @gh/zpm-zsh/zpm-info
 
-zpm load @gh/agkozak/zsh-z,async
-source $ZDOTDIR/plugins/zsh-z.zsh
-
 # Auto suggestions
 zpm load @gh/zsh-users/zsh-autosuggestions,async
 source $ZDOTDIR/plugins/zsh-autosuggestions.zsh

@@ -1,3 +1,4 @@
 zsh/antigen/*
 dotset-bin/target
 dotset-bin/*.lock
+nvim/lazy-lock.json

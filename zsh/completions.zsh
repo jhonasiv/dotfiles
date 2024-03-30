@@ -89,3 +89,5 @@ fpath+=$ZDOTDIR/completions
 autoload -Uz compinit
 compinit
 # End of lines added by compinstall
+
+source <(jj util completion zsh)

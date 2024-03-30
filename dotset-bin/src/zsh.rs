@@ -1,15 +1,11 @@
 use std::{
-    fmt::{Debug, Display},
-    fs::{create_dir, remove_dir_all, remove_file, File},
+    fs::{create_dir, remove_dir_all, File},
     io::Write,
-    os::unix::fs::symlink,
     path::PathBuf,
 };
 
 use dotset::*;
-use walkdir::WalkDir;
-
-use crate::Starship;
+use git2::Repository;
 
 #[derive(Clone)]
 pub struct Zpm {
@@ -24,19 +20,15 @@ impl Zpm {
     }
 }
 
-impl Display for Zpm {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "ZPM")
+impl DisplayablePackage for Zpm {
+    fn display(&self) -> String {
+        String::from("ZPM")
+    }
+
+    fn debug(&self) -> String {
+        format!("ZPM {{ {} }}", self.zpm_destination.display())
     }
 }
-
-impl Debug for Zpm {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "ZPM {{ {} }} ", self.zpm_destination.display())
-    }
-}
-
-impl DisplayablePackage for Zpm {}
 
 impl Package for Zpm {
     fn install(&self, _interactive: bool) {
@@ -54,7 +46,14 @@ impl Package for Zpm {
     }
 
     fn update(&self) {
-        fast_forward_merge(&self.zpm_destination, "origin", "main");
+        let repo = Repository::open(&self.zpm_destination).expect(
+            format!(
+                "{} should be a git repository",
+                self.zpm_destination.display()
+            )
+            .as_str(),
+        );
+        fast_forward_merge(repo, "origin", "main");
     }
 
     fn is_installed(&self) -> bool {
@@ -66,30 +65,18 @@ impl Package for Zpm {
     }
 }
 
-#[derive(Clone)]
-pub enum ZshDependencies {
-    ZPM(Zpm),
-    Starship(Starship),
-}
-
 pub struct Zsh {
     config: Option<PathBuf>,
     destination: Option<PathBuf>,
-    dependencies: Vec<ZshDependencies>,
     selector: Selector,
 }
 
 impl Zsh {
-    pub fn new(
-        config: Option<&PathBuf>,
-        destination: Option<&PathBuf>,
-        dependencies: Vec<ZshDependencies>,
-    ) -> Self {
+    pub fn new(config: Option<&PathBuf>, destination: Option<&PathBuf>) -> Self {
         let selector = Selector::new(vec![SupportedPackageManager::APT]);
         Self {
             config: config.cloned(),
             destination: destination.cloned(),
-            dependencies,
             selector,
         }
     }
@@ -102,18 +89,15 @@ impl Zsh {
     }
 }
 
-impl Display for Zsh {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "ZSH")
+impl DisplayablePackage for Zsh {
+    fn display(&self) -> String {
+        String::from("ZSH")
     }
-}
 
-impl Debug for Zsh {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn debug(&self) -> String {
         let config = self.config.clone().unwrap_or(PathBuf::new());
         let dst = self.destination.clone().unwrap_or(PathBuf::new());
-        write!(
-            f,
+        format!(
             "ZSH {{ config: {}, dst: {} }}",
             config.display(),
             dst.display()
@@ -121,22 +105,7 @@ impl Debug for Zsh {
     }
 }
 
-impl DisplayablePackage for Zsh {}
-
 impl Package for Zsh {
-    fn dependencies(&self) -> Vec<Box<dyn DisplayablePackage>> {
-        self.dependencies
-            .clone()
-            .into_iter()
-            .map(|dep| match dep {
-                ZshDependencies::ZPM(zpm) => Box::new(zpm) as Box<dyn DisplayablePackage>,
-                ZshDependencies::Starship(starship) => {
-                    Box::new(starship) as Box<dyn DisplayablePackage>
-                },
-            })
-            .collect()
-    }
-
     fn name(&self) -> String {
         String::from("zsh")
     }
@@ -156,7 +125,7 @@ impl Package for Zsh {
                     println!("Creating zsh folder at {}", conf.display());
                     create_dir(&dst).unwrap();
                 }
-                link_zsh_configurations(&conf, &dst);
+                link_all_files_and_directories_from_folder(&conf, &dst);
             },
             _ => (),
         };
@@ -173,35 +142,5 @@ impl Package for Zsh {
 
     fn uninstall(&self, _interactive: bool) {
         self.selector.uninstall("zsh").unwrap();
-    }
-}
-
-fn link_zsh_configurations(folder: &PathBuf, dst_prefix: &PathBuf) {
-    let walker = WalkDir::new(&folder);
-    for entry in walker.into_iter().filter_map(|e| e.ok()) {
-        let path = entry.path();
-        if path.is_dir() {
-            continue;
-        }
-        let entry_relative_path = path.strip_prefix(&folder).unwrap();
-        let destination = dst_prefix.join(entry_relative_path);
-        dbg!("linking {} to {}", path.display(), &destination.display());
-        let destination_path = PathBuf::from(&destination);
-        if destination_path.exists() {
-            remove_file(&destination).unwrap();
-        }
-        let entry_relative_path = path.parent();
-        let destination_path_parent = destination_path.parent();
-        if entry_relative_path.is_some_and(|p| p.is_dir())
-            && destination_path_parent.is_some_and(|p| !p.exists())
-        {
-            dbg!(
-                "folder {} does not exist, but it's required by {}. Creating it...",
-                entry_relative_path.unwrap().display(),
-                destination.display()
-            );
-            create_dir(destination_path_parent.unwrap()).unwrap();
-        }
-        symlink(path, destination).unwrap();
     }
 }

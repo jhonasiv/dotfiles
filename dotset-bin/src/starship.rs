@@ -1,39 +1,25 @@
-use std::{
-    fmt::{Debug, Display},
-    io::stdin,
-    ops::Deref,
-    process::Command,
-    str,
-};
+use std::{io::stdin, process::Command, str};
 
 use dotset::*;
 
-use crate::NerdFonts;
-
 #[derive(Clone)]
-pub struct Starship {
-    font: NerdFonts,
-}
+pub struct Starship {}
 
 impl Starship {
-    pub fn new(nerd_font: NerdFonts) -> Self {
-        Self { font: nerd_font }
+    pub fn new() -> Self {
+        Self {}
     }
 }
 
-impl Display for Starship {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Starship")
+impl DisplayablePackage for Starship {
+    fn display(&self) -> String {
+        String::from("Starship")
+    }
+
+    fn debug(&self) -> String {
+        format!("Starhsip")
     }
 }
-
-impl Debug for Starship {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Starship {{ font: {} }}", self.font)
-    }
-}
-
-impl DisplayablePackage for Starship {}
 
 impl Package for Starship {
     fn install(&self, _interactive: bool) {
@@ -49,10 +35,6 @@ impl Package for Starship {
 
     fn update(&self) {
         self.install(false);
-    }
-
-    fn dependencies(&self) -> Vec<Box<dyn DisplayablePackage>> {
-        vec![Box::new(self.font.clone())]
     }
 
     fn is_installed(&self) -> bool {
@@ -72,13 +54,5 @@ impl Package for Starship {
             return;
         }
         println!("Could not find a starship instance in your system. Are you sure it's installed?");
-    }
-}
-
-impl Deref for Starship {
-    type Target = dyn Package;
-
-    fn deref(&self) -> &Self::Target {
-        self as &dyn Package
     }
 }
