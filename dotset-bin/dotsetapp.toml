@@ -1,0 +1,4 @@
+[instance]
+name = "Dotfiles"
+bin_path = "/home/jhonas/dotfiles/dotset-bin/target/debug/dotset-bin"
+dotsetapp_path = "/home/jhonas/dotfiles/dotset-bin/dotsetapp.toml"
