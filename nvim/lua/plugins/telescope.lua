@@ -1,6 +1,7 @@
 return {
 	"nvim-telescope/telescope.nvim",
-	branch = "0.1.x",
+	branch = "master",
+	commit = "4d4ade7",
 	dependencies = {
 		{
 			"nvim-telescope/telescope-fzf-native.nvim",
@@ -24,7 +25,6 @@ return {
 				},
 				workwork = {
 					relative_path_entries = true,
-					support_nongit_folders = true,
 				},
 				file_browser = {
 					hijack_netrw = true,
@@ -70,7 +70,10 @@ return {
 						["<C-j>"] = actions.move_selection_next,
 						["<C-k>"] = actions.move_selection_previous,
 						["|"] = actions.select_vertical,
-						["_"] = actions.select_horizontal,
+						["\\"] = actions.select_horizontal,
+						["<C-l>"] = actions.select_default,
+					},
+					n = {
 						["<C-l>"] = actions.select_default,
 					},
 				},
@@ -110,5 +113,15 @@ return {
 		end, { desc = "[F]ind [N]eovim files" })
 
 		vim.keymap.set("n", "<leader>fb", "<cmd>Telescope file_browser<CR>", { desc = "[F]ile [B]rowser" })
+		vim.keymap.set("n", "<leader>wf", "<cmd>Telescope workwork files<CR>", { desc = "[W]orkspace [F]iles" })
+		vim.keymap.set("n", "<leader>wg", "<cmd>Telescope workwork git_files<CR>", { desc = "[W]orspace [G]it Files" })
+		vim.keymap.set("n", "<leader>ww", "<cmd>Telescope workwork select<CR>", { desc = "[W]orspaces" })
+		vim.keymap.set("n", "<leader>wd", "<cmd>Telescope workwork delete<CR>", { desc = "[W]orspace [D]elete" })
+		vim.keymap.set(
+			"n",
+			"<leader>wr",
+			"<cmd>Telescope workwork remove_folder<CR>",
+			{ desc = "[W]orspace [R]emove Folder" }
+		)
 	end,
 }

@@ -5,7 +5,7 @@ return {
 	config = function()
 		require("workwork").setup({
 			autosave = {
-				on_create = true,
+				on_create = false,
 				on_new_folder = true,
 			},
 			integrations = {
@@ -17,5 +17,11 @@ return {
 				},
 			},
 		})
+		vim.keymap.set(
+			"n",
+			"<Leader>ws",
+			require("workwork.core").save,
+			{ desc = "[S]ave current workspaces configuration" }
+		)
 	end,
 }
