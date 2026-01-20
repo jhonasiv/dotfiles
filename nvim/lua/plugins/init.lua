@@ -1,5 +1,12 @@
-return {
-
-	{ "betaboon/plenary.nvim", branch = "fix-find-upwards" },
-	{ "numToStr/Comment.nvim", enabled = true, opts = {} },
-}
+require("plugins/blink")
+require("plugins/colorscheme")
+require("plugins/lsp")
+require("plugins/gitsigns")
+require("plugins/mini")
+require("plugins/mini-ai")
+require("plugins/mini-clue")
+require("plugins/mini-pair")
+require("plugins/mini-pick")
+require("plugins/mini-surround")
+require("plugins/neotree")
+require("plugins/nvim-treesitter")

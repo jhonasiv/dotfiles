@@ -1,4 +1,12 @@
 zsh/antigen/*
+zsh/.zpm/*
+*.histfile
+*.zcompdump
+*.python-version
+*.zwc
 dotset-bin/target
 dotset-bin/*.lock
 nvim/lazy-lock.json
+nvim/nvim-pack-lock.json
+nvim/lua/plugins.bak/*
+*.bak

@@ -24,3 +24,4 @@ unsetopt beep # disables beeping
 HISTFILE=~/.config/zsh/.histfile
 HISTSIZE=100000
 SAVEHIST=80000
+EDITOR=$(which nvim)
