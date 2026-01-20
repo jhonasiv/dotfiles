@@ -1,12 +1,23 @@
-require("plugins/blink")
-require("plugins/colorscheme")
-require("plugins/lsp")
-require("plugins/gitsigns")
-require("plugins/mini")
-require("plugins/mini-ai")
-require("plugins/mini-clue")
-require("plugins/mini-pair")
-require("plugins/mini-pick")
-require("plugins/mini-surround")
-require("plugins/neotree")
-require("plugins/nvim-treesitter")
+local ENABLED_PLUGINS = {
+    "blink",
+    "colorscheme",
+    "gitsigns",
+    "hunk",
+    "jujutsu",
+    "lsp",
+    "mini",
+    "mini-ai",
+    "mini-clue",
+    "mini-pair",
+    "mini-statusline",
+    "mini-surround",
+    "nvim-treesitter",
+    "opencode",
+    "snacks",
+    -- "workwork"
+}
+
+
+for _, plugin in ipairs(ENABLED_PLUGINS) do
+    require("plugins/" .. plugin)
+end

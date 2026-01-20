@@ -25,6 +25,7 @@ vim.o.splitbelow = true
 -- Sets how neovim will display certain whitespace in the editor.
 vim.o.list = true
 vim.opt.listchars = { tab = "» ", trail = "·", nbsp = "␣" }
+
 vim.o.winborder = "rounded"
 vim.keymap.set("n", "<leader>tl", function()
     vim.opt.list = not (vim.opt.list:get())
@@ -69,3 +70,11 @@ vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
 -- Set completeopt to have a better completion experiencie
 vim.o.completeopt = "menuone,noselect"
 vim.lsp.inline_completion = true
+vim.api.nvim_create_autocmd("BufEnter", {
+    desc = "Auto change to VCS root when entering buffer",
+    group = vim.api.nvim_create_augroup("autochdir-vcs-root", { clear = true }),
+    callback = function ()
+        local helpers = require("misc")
+        helpers.change_directory_to_current_buffer_root()
+    end
+})

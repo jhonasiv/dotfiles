@@ -1,4 +1,4 @@
-vim.pack.add { { src = "file:///home/jhonas/dev/workwork" } }
+vim.pack.add { { src = "file:///home/jhonas/dev/workwork", version="snacks-integration" } }
 
 require("workwork").setup({
     autosave = {
@@ -14,9 +14,6 @@ require("workwork").setup({
         },
     },
 })
-vim.keymap.set(
-    "n",
-    "<Leader>ws",
-    require("workwork.core").save,
-    { desc = "Save current workspaces configuration" }
-)
+
+vim.keymap.set({ "n", "x" }, "<Leader>ks", require("workwork.core").save,
+    { desc = "Save current workspaces configuration" })

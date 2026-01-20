@@ -25,6 +25,7 @@ require("neo-tree").setup({
         follow_current_file = {
             enabled = true,
         },
+        bind_to_cwd = true,
         window = {
             mappings = {
                 ["<CR>"] = "open",
