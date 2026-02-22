@@ -1,17 +1,15 @@
-source $ZDOTDIR/.zpm/zpm.zsh
+# Source Antigen
+source $HOME/.config/zsh/plugins/antigen/antigen.zsh
 
-# Plugins for zpm
-zpm load @gh/zpm-zsh/zpm-readme
-zpm load @gh/zpm-zsh/zpm-info
+# Load bundles from plugins.txt
+antigen bundles < $ZDOTDIR/plugins.txt
 
-# Auto suggestions
-zpm load @gh/zsh-users/zsh-autosuggestions,async
+# Apply antigen
+antigen apply
+
+# Source local plugin settings after plugin load
 source $ZDOTDIR/plugins/zsh-autosuggestions.zsh
-
-zpm load @gh/zdharma-continuum/fast-syntax-highlighting
-zpm load @gh/zsh-users/zsh-history-substring-search
 source $ZDOTDIR/plugins/zsh-history-substring-search.zsh
 
-zpm load @gh/olets/zsh-abbr
-
+# Initialize Starship after plugins
 source $ZDOTDIR/plugins/starship.zsh
