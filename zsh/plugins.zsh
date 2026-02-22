@@ -10,3 +10,4 @@ source $ZDOTDIR/plugins/zsh-history-substring-search.zsh
 
 # Initialize Starship after plugins
 source $ZDOTDIR/plugins/starship.zsh
+
