@@ -12,3 +12,4 @@ nvim/lua/plugins.bak/*
 *.bak
 **/node_modules/*
 *.lock
+plans/

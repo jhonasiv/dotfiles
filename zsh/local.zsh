@@ -4,26 +4,26 @@ fi
 
 export PYENV_ROOT="$HOME/.pyenv"
 [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init - zsh)"
 
-# Restart your shell for the changes to take effect.
+# Lazy-load pyenv on first invocation
+_pyenv_init() {
+	eval "$(pyenv init - zsh)"
+	eval "$(pyenv virtualenv-init -)"
+	unset -f _pyenv_init
+}
 
-# Load pyenv-virtualenv automatically by adding
-# the following to ~/.bashrc:
-
-eval "$(pyenv virtualenv-init -)"
+pyenv() {
+	_pyenv_init
+	pyenv "$@"
+}
 
 export PATH=$PATH:/opt/lua-language-server/bin
 export PATH=$HOME/.opencode/bin:$PATH
 
-# Ghostty shell integration for Bash. This should be at the top of your zsh!
-if [ -n "${GHOSTTY_RESOURCES_DIR}" ]; then
-    builtin source "${GHOSTTY_RESOURCES_DIR}/shell-integration/zsh/ghostty-integration"
-fi
-
 # Export opencode related environment variables
-export $(cat $HOME/dev/containers/opencode/.env | xargs)
+set -a
+[[ -f "$HOME/dev/containers/opencode/.env" ]] && source "$HOME/dev/containers/opencode/.env"
+set +a
 
 # Cabin completions
-fpath+=/home/jhonas/.local/share/cabin/completions/zsh
-autoload -Uz compinit && compinit 2>/dev/null || true
+fpath+=$HOME/.local/share/cabin/completions/zsh

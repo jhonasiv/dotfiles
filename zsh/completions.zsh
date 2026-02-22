@@ -28,6 +28,11 @@ setopt hash_list_all # hashs the entire command path before attempting completio
 setopt menu_complete # on ambiguous completions, instead of listing or beeping, insert the first match immediately. Then when compeltion is request again, remove the first match and insert the second match, etc.
 setopt list_packed # make the completion list smaller by printing the matches in columns with different widths
 
+# Set fpath before compinit
+# Look at .zfunc for completions
+fpath+=$ZDOTDIR/completions
+# Cabin completions
+fpath+=$HOME/.local/share/cabin/completions/zsh
 
 # ZStyles
 
@@ -37,7 +42,7 @@ zstyle ':completion:*' completer _expand _complete _ignored _match _approximate 
 
 zstyle ':completion:*' use-cache on
 zstyle ':completion:*' cache-path "$XDG_CACHE_HOME/zsh/.zcompcache"
-zstyle :compinstall filename '/home/jhonas/.config/zsh/.comp'
+zstyle :compinstall filename '$ZDOTDIR/.comp'
 
 # Complete the alias when _expand_alias is used as a function
 zstyle ':completion:*' complete true
@@ -83,12 +88,26 @@ zstyle ':completion:*:*:*:*:processes' command "ps -u $USER -o pid,user,args -w 
 
 zstyle -e ':completion:*:(ssh|scp|sftp|rsh|rsync):hosts' hosts 'reply=(${=${${(f)"$(cat {/etc/ssh_,~/.ssh/known_}hosts(|2)(N) /dev/null)"}%%[# ]*}//,/ })'
 
-# Look at .zfunc for completions
-fpath+=$ZDOTDIR/completions
-
 autoload -Uz compinit
-compinit
+compinit -d "$ZSH_CACHE_HOME/zcompdump"
 # End of lines added by compinstall
+
+# Cache jj completions
+_ensure_jj_completions() {
+	local jj_cache_dir="$ZSH_CACHE_HOME/jj"
+	local jj_completions_file="$jj_cache_dir/completions.zsh"
+	
+	if [[ ! -f "$jj_completions_file" ]]; then
+		mkdir -p "$jj_cache_dir"
+		COMPLETE=zsh jj > "$jj_completions_file" 2>/dev/null
+	fi
+	
+	if [[ -f "$jj_completions_file" ]]; then
+		source "$jj_completions_file"
+	fi
+}
+
+_ensure_jj_completions
 
 #compdef opencode
 ###-begin-opencode-completions-###
@@ -117,5 +136,3 @@ else
   compdef _opencode_yargs_completions opencode
 fi
 ###-end-opencode-completions-###
-
-source <(COMPLETE=zsh jj)

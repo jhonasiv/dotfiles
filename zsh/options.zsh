@@ -15,13 +15,24 @@ setopt interactive_comments # allow comments in interactive shells
 setopt long_list_jobs # print job notifications in the long format
 setopt null_glob # if a pattern for filename generation has no matches, delete the pattern from the argument list instead of reporting an error
 setopt path_dirs # perform a path search even on command names with slashes in them
-setopt path_script # a script does not need to specify a directory path to the sheel, it is first looked in the current directory, then in the command path.
+setopt path_script # a script does not need to specify a directory path to the shell, it is first looked in the current directory, then in the command path.
 setopt prompt_subst # parameter expansion, command substitution and arithmetic expansion are performed in prompts
 setopt pushd_ignore_dups # dont push multiple copies of the same directory onto the dir stack
 setopt share_history # both imports new commands from the history file and causes your typed commands to be appended to the history file (see INC_APPEND_HISTORY).
 unsetopt beep # disables beeping
 
-HISTFILE=~/.config/zsh/.histfile
+# Use XDG_STATE_HOME for history file per XDG Base Directory spec
+export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
+[[ ! -d "$XDG_STATE_HOME" ]] && mkdir -p "$XDG_STATE_HOME"
+HISTFILE="$XDG_STATE_HOME/zsh/history"
+[[ ! -d "${HISTFILE%/*}" ]] && mkdir -p "${HISTFILE%/*}"
 HISTSIZE=100000
 SAVEHIST=80000
-EDITOR=$(which nvim)
+if (( ${+commands[nvim]} )); then
+    EDITOR=nvim
+elif (( ${+commands[vim]} )); then
+    EDITOR=vim
+else
+    EDITOR=vi
+fi
+export EDITOR
