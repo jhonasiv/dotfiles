@@ -6,6 +6,7 @@ setopt extended_glob # treat `#', `~' and `^' as part of patterns for filename g
 setopt glob_star_short # abbrs **/* to ** and ***/* to *** (follows symbolic links)
 setopt hist_expire_dups_first # trims the oldest history event that has a dup before losing a unique event
 setopt hist_ignore_all_dups # removes older command from the history list when a dup is added
+setopt hist_save_no_dups    # don't save duplicate commands to history file
 setopt hist_ignore_space # ignore commands that start with space
 setopt hist_no_store # dont store the hist command in the history file
 setopt hist_reduce_blanks # remove superfluous blanks from each command being added

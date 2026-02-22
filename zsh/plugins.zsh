@@ -1,11 +1,8 @@
-# Source Antigen
-source $HOME/.config/zsh/plugins/antigen/antigen.zsh
+# Source antidote
+source $HOME/.config/zsh/antidote/antidote.zsh
 
-# Load bundles from plugins.txt
-antigen bundles < $ZDOTDIR/plugins.txt
-
-# Apply antigen
-antigen apply
+# Load plugins from plugins file
+antidote load $ZDOTDIR/.zsh_plugins.txt
 
 # Source local plugin settings after plugin load
 source $ZDOTDIR/plugins/zsh-autosuggestions.zsh

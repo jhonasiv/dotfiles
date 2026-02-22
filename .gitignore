@@ -1,5 +1,6 @@
 zsh/antigen/*
 zsh/.zpm/*
+zsh/.zsh_plugins.zsh
 *.histfile
 *.zcompdump
 *.python-version

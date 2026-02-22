@@ -92,13 +92,25 @@ autoload -Uz compinit
 compinit -d "$ZSH_CACHE_HOME/zcompdump"
 # End of lines added by compinstall
 
-# Cache jj completions
+# Cache jj completions with version invalidation
 _ensure_jj_completions() {
-	local jj_cache_dir="$ZSH_CACHE_HOME/jj"
+	# Ensure cache directory exists first
+	local jj_cache_dir="${ZSH_CACHE_HOME:-$HOME/.cache/zsh}/jj"
 	local jj_completions_file="$jj_cache_dir/completions.zsh"
+	local version_file="$jj_cache_dir/version"
+	
+	# Create cache directory if needed
+	[[ -d "$jj_cache_dir" ]] || mkdir -p "$jj_cache_dir"
+	
+	local jj_version=$(jj --version 2>/dev/null | cut -d' ' -f2)
+	
+	# Invalidate cache if jj version changed
+	if [[ ! -f "$version_file" ]] || [[ "$(cat $version_file 2>/dev/null)" != "$jj_version" ]]; then
+		rm -f "$jj_completions_file"
+		echo "$jj_version" > "$version_file" 2>/dev/null
+	fi
 	
 	if [[ ! -f "$jj_completions_file" ]]; then
-		mkdir -p "$jj_cache_dir"
 		COMPLETE=zsh jj > "$jj_completions_file" 2>/dev/null
 	fi
 	
