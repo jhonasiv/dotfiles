@@ -1,7 +1,7 @@
 vim.pack.add({
     { src = "https://github.com/MeanderingProgrammer/render-markdown.nvim" }
 
-})
+}, { confirm = false })
 
 require("render-markdown").setup({
     anti_conceal = { enabled = true },

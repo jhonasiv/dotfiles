@@ -4,7 +4,7 @@ vim.pack.add({
         version = "v1.8.0",
     },
     "https://github.com/rafamadriz/friendly-snippets"
-})
+}, { confirm = false })
 
 
 -- Lazy loads blink when entering insert mode for the first time
@@ -64,4 +64,3 @@ vim.api.nvim_create_autocmd("InsertEnter", {
         })
     end
 })
-

@@ -1,6 +1,6 @@
 vim.pack.add({
     { src = "https://github.com/yannvanhalewyn/jujutsu.nvim" }
-})
+}, { confirm = false })
 
 require("plugins.difftastic")
 require("jujutsu-nvim").setup(

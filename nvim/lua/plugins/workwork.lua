@@ -1,4 +1,4 @@
-vim.pack.add { { src = "file:///home/jhonas/dev/workwork", version="snacks-integration" } }
+vim.pack.add({ { src = "file:///home/jhonas/dev/workwork", version = "snacks-integration" } }, { confirm = false })
 
 require("workwork").setup({
     autosave = {

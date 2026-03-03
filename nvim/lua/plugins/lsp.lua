@@ -5,7 +5,7 @@ vim.pack.add({
     { src = "https://github.com/WhoIsSethDaniel/mason-tool-installer.nvim" },
     "https://github.com/j-hui/fidget.nvim",
     "https://github.com/folke/lazydev.nvim",
-})
+}, { confirm = false })
 
 require("mason").setup()
 require("mason-lspconfig").setup()

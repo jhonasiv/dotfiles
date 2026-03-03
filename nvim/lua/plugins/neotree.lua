@@ -5,7 +5,7 @@ vim.pack.add({
 	"https://github.com/MunifTanjim/nui.nvim" ,
 	"https://github.com/3rd/image.nvim" ,
     "https://github.com/antosha417/nvim-lsp-file-operations"
-})
+}, { confirm = false })
 
 require("neo-tree").setup({
     close_if_last_window = true,

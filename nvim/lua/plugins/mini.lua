@@ -1,2 +1,2 @@
-vim.pack.add({ { src = "https://github.com/echasnovski/mini.nvim" } })
+vim.pack.add({ { src = "https://github.com/echasnovski/mini.nvim" } }, { confirm = false })
 

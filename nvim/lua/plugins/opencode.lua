@@ -1,7 +1,7 @@
 vim.pack.add({
     { src = "https://github.com/jhonasiv/opencode.nvim" },
     { src = "https://github.com/nvim-lua/plenary.nvim" }
-})
+}, { confirm = false })
 
 require("plugins/render-markdown")
 

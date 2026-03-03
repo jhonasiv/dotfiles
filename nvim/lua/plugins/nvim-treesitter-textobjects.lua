@@ -1,7 +1,6 @@
 vim.pack.add({
     { src = "https://github.com/nvim-treesitter/nvim-treesitter-textobjects", version = "main" }
-    
-})
+}, { confirm = false })
 
 require("nvim-treesitter-textobjects").setup {
     select = {
@@ -18,18 +17,18 @@ require("nvim-treesitter-textobjects").setup {
 
 local select = require "nvim-treesitter-textobjects.select".select_textobject
 
-vim.keymap.set({"x", "o"}, "af", function()
+vim.keymap.set({ "x", "o" }, "af", function()
     select("@function.outer", "textobjects")
 end)
-vim.keymap.set({"x", "o"}, "if", function()
+vim.keymap.set({ "x", "o" }, "if", function()
     select("@function.inner", "textobjects")
 end)
-vim.keymap.set({"x", "o"}, "ac", function()
+vim.keymap.set({ "x", "o" }, "ac", function()
     select("@class.outer", "textobjects")
 end)
-vim.keymap.set({"x", "o"}, "ic", function()
+vim.keymap.set({ "x", "o" }, "ic", function()
     select("@class.inner", "textobjects")
 end)
-vim.keymap.set({"x", "o"}, "as", function()
+vim.keymap.set({ "x", "o" }, "as", function()
     select("@local.scope", "locals")
 end)

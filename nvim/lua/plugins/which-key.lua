@@ -1,4 +1,4 @@
-vim.pack.add({ { src = "https://github.com/folke/which-key.nvim" } })
+vim.pack.add({ { src = "https://github.com/folke/which-key.nvim" } }, { confirm = false })
 
 local wk = require("which-key")
 wk.setup()
