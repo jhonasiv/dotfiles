@@ -14,3 +14,4 @@ nvim/lua/plugins.bak/*
 **/node_modules/*
 *.lock
 plans/
+secrets.zsh

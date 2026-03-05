@@ -14,6 +14,7 @@ source $ZDOTDIR/utils.zsh
 source $ZDOTDIR/plugins.zsh
 source $ZDOTDIR/completions.zsh
 source $ZDOTDIR/integrations.zsh
+source $ZDOTDIR/secrets.zsh
 
 # Enable fancy-ctrl-z
 zle -N fancy-ctrl-z
