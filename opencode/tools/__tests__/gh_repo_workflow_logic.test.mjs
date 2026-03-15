@@ -173,6 +173,48 @@ test("getWorkflowStopReasons reports configured stop conditions and waiting stat
   ]);
 });
 
+test("getWorkflowStopReasons reports ambiguous jj publish state", () => {
+  const reasons = getWorkflowStopReasons({
+    session: {
+      stopWhenApproved: false,
+      stopWhenChecksPass: false,
+      stopWhenNoUnresolvedThreads: false,
+      pushesRemaining: 2,
+      reviewRoundsRemaining: 2,
+    },
+    unresolvedThreadCount: 0,
+    pullRequest: { reviewDecision: "REVIEW_REQUIRED" },
+    workingCopy: { dirty: false },
+    publishStatus: { ambiguous: true, hasCommittedUnpublishedChanges: false },
+    checksPass: false,
+    reviewerUpdates: { awaiting: false, hasNewUpdates: false },
+    afterRequestReview: false,
+  });
+
+  assert.ok(reasons.includes("ambiguous_publish_state"));
+});
+
+test("getWorkflowStopReasons does not claim code changes are missing when jj work is unpublished", () => {
+  const reasons = getWorkflowStopReasons({
+    session: {
+      stopWhenApproved: false,
+      stopWhenChecksPass: false,
+      stopWhenNoUnresolvedThreads: false,
+      pushesRemaining: 2,
+      reviewRoundsRemaining: 2,
+    },
+    unresolvedThreadCount: 1,
+    pullRequest: { reviewDecision: "CHANGES_REQUESTED" },
+    workingCopy: { dirty: false },
+    publishStatus: { ambiguous: false, hasCommittedUnpublishedChanges: true },
+    checksPass: false,
+    reviewerUpdates: { awaiting: false, hasNewUpdates: false },
+    afterRequestReview: false,
+  });
+
+  assert.equal(reasons.includes("awaiting_code_changes_or_reply"), false);
+});
+
 // ---------------------------------------------------------------------------
 // isApprovalComment
 // ---------------------------------------------------------------------------
@@ -369,6 +411,42 @@ test("getPublishStatus reports ready when clean and synced", () => {
   assert.equal(status.ready, true);
 });
 
+test("getPublishStatus reports ambiguous jj state when no bookmark points at @", () => {
+  const status = getPublishStatus(
+    { dirty: false, vcs: "jj", raw: "The working copy is clean" },
+    { vcs: "jj", bookmarks: [], publishInspection: { checked: false } },
+  );
+
+  assert.equal(status.vcs, "jj");
+  assert.equal(status.ambiguous, true);
+  assert.equal(status.state, "needs_bookmark");
+  assert.equal(status.hasUnpushedCommits, true);
+  assert.equal(status.ready, false);
+});
+
+test("getPublishStatus reports jj bookmarked commits that still need publish", () => {
+  const status = getPublishStatus(
+    { dirty: false, vcs: "jj", raw: "The working copy is clean" },
+    {
+      vcs: "jj",
+      bookmarks: ["feature"],
+      publishInspection: {
+        checked: true,
+        remote: "origin",
+        hasPendingChanges: true,
+        pendingBookmarks: ["feature"],
+        raw: "Changes to push to origin",
+      },
+    },
+  );
+
+  assert.equal(status.ambiguous, false);
+  assert.equal(status.state, "needs_publish");
+  assert.equal(status.hasCommittedUnpublishedChanges, true);
+  assert.equal(status.hasUnpushedCommits, true);
+  assert.deepEqual(status.pendingBookmarks, ["feature"]);
+});
+
 // ---------------------------------------------------------------------------
 // getReviewLoopPhase
 // ---------------------------------------------------------------------------
@@ -451,6 +529,32 @@ test("getReviewLoopPhase returns WAITING_FOR_REVIEW when idle", () => {
   assert.equal(phase, REVIEW_LOOP_PHASES.WAITING_FOR_REVIEW);
 });
 
+test("getReviewLoopPhase returns NEEDS_PUBLISH when work is not published yet", () => {
+  const phase = getReviewLoopPhase({
+    session: { pushesRemaining: 2 },
+    hasPullRequest: true,
+    currentReviewers: ["alice"],
+    reviewerUpdates: { hasNewUpdates: false },
+    unresolvedThreadCount: 0,
+    satisfaction: { allSatisfied: false, reviewers: [] },
+    publishStatus: { hasUnpushedCommits: true, ambiguous: false },
+  });
+  assert.equal(phase, REVIEW_LOOP_PHASES.NEEDS_PUBLISH);
+});
+
+test("getReviewLoopPhase does not complete while unpublished jj work remains", () => {
+  const phase = getReviewLoopPhase({
+    session: { pushesRemaining: 2 },
+    hasPullRequest: true,
+    currentReviewers: ["alice"],
+    reviewerUpdates: { hasNewUpdates: false },
+    unresolvedThreadCount: 0,
+    satisfaction: { allSatisfied: true, reviewers: [{ login: "alice", satisfied: true }] },
+    publishStatus: { hasUnpushedCommits: true, ambiguous: false },
+  });
+  assert.equal(phase, REVIEW_LOOP_PHASES.NEEDS_PUBLISH);
+});
+
 // ---------------------------------------------------------------------------
 // hasNewReviewActivity
 // ---------------------------------------------------------------------------
@@ -522,4 +626,17 @@ test("getWorkflowNextActions falls back to workingCopy.dirty when publishStatus 
   });
 
   assert.ok(actions.includes("push_changes"));
+});
+
+test("getWorkflowNextActions avoids push action for ambiguous jj publish state", () => {
+  const actions = getWorkflowNextActions({
+    session: { pushesRemaining: 1, reviewRoundsRemaining: 1 },
+    unresolvedThreadCount: 0,
+    pullRequest: { reviewDecision: "REVIEW_REQUIRED" },
+    workingCopy: { dirty: false },
+    reviewerUpdates: { awaiting: false, hasNewUpdates: false },
+    publishStatus: { hasUnpushedCommits: true, ambiguous: true },
+  });
+
+  assert.deepEqual(actions, ["wait"]);
 });

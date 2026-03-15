@@ -22,6 +22,7 @@ export function getWorkflowStopReasons({
   unresolvedThreadCount,
   pullRequest,
   workingCopy,
+  publishStatus,
   checksPass,
   reviewerUpdates,
   afterRequestReview,
@@ -57,11 +58,19 @@ export function getWorkflowStopReasons({
     reasons.push("review_round_budget_exhausted");
   }
 
+  if (publishStatus?.ambiguous) {
+    reasons.push("ambiguous_publish_state");
+  }
+
   if (afterRequestReview) {
     reasons.push("review_requested");
   }
 
-  if (!workingCopy.dirty && unresolvedThreadCount > 0) {
+  if (
+    !workingCopy.dirty &&
+    unresolvedThreadCount > 0 &&
+    !publishStatus?.hasCommittedUnpublishedChanges
+  ) {
     reasons.push("awaiting_code_changes_or_reply");
   }
 
@@ -195,11 +204,12 @@ const ALWAYS_BLOCKING_WORKFLOW_REASONS = new Set([
 
 const ACTION_BLOCKING_WORKFLOW_REASONS = {
   reply_and_resolve: new Set(),
-  push_changes: new Set(["push_budget_exhausted"]),
+  push_changes: new Set(["push_budget_exhausted", "ambiguous_publish_state"]),
   request_review: new Set([
     "review_round_budget_exhausted",
     "waiting_for_review_updates",
     "awaiting_code_changes_or_reply",
+    "ambiguous_publish_state",
   ]),
 };
 
@@ -238,8 +248,9 @@ export function getWorkflowNextActions({
   }
 
   const effectiveDirty = publishStatus ? publishStatus.hasUnpushedCommits : workingCopy.dirty;
+  const canAutoPublish = publishStatus ? !publishStatus.ambiguous : true;
 
-  if (effectiveDirty && (session?.pushesRemaining ?? 0) > 0) {
+  if (effectiveDirty && canAutoPublish && (session?.pushesRemaining ?? 0) > 0) {
     actions.push("push_changes");
   }
 
@@ -397,16 +408,79 @@ export function evaluateReviewerSatisfaction({
  *
  * Fields:
  *   hasUncommittedChanges - local file modifications not yet committed
- *   hasUnpushedCommits    - committed but not pushed to remote
+ *   hasCommittedUnpublishedChanges - committed/bookmarked but not pushed to remote
+ *   hasUnpushedCommits    - anything still needs local VCS action before review can continue
  *   needsCommitBeforePush - uncommitted changes exist
+ *   ambiguous             - current publish target is unclear (for example no bookmark at @)
  *   ready                 - nothing to commit or push
  */
 export function getPublishStatus(workingCopy, refContext) {
+  const vcs = workingCopy?.vcs ?? refContext?.vcs ?? null;
   const hasUncommittedChanges = workingCopy?.dirty ?? false;
+
+  if (vcs === "jj") {
+    const bookmarks = Array.isArray(refContext?.bookmarks) ? refContext.bookmarks : [];
+    const inspection = refContext?.publishInspection ?? {};
+    const ambiguous = bookmarks.length === 0;
+    const pendingBookmarks = Array.isArray(inspection?.pendingBookmarks)
+      ? inspection.pendingBookmarks
+      : [];
+    const hasCommittedUnpublishedChanges = Boolean(
+      !hasUncommittedChanges && !ambiguous && (inspection?.hasPendingChanges ?? false),
+    );
+    const warnings = [];
+    const nextSteps = [];
+    let state = "ready";
+
+    if (hasUncommittedChanges) {
+      state = ambiguous ? "needs_commit_and_bookmark" : "needs_commit";
+      nextSteps.push("Inspect the working copy with `jj status` and `jj diff`.");
+      nextSteps.push("Use `jj describe -m ...` to record or rename the current change.");
+    }
+
+    if (ambiguous) {
+      warnings.push("No bookmark points at `@`, so the current change cannot be published safely yet.");
+      nextSteps.push("Create or move a bookmark with `jj bookmark create <name>` or `jj bookmark set <name> -r @`.");
+      if (!hasUncommittedChanges) {
+        state = "needs_bookmark";
+      }
+    } else if (inspection?.error) {
+      warnings.push(`Could not confirm bookmark publish state: ${inspection.error}`);
+      if (!hasUncommittedChanges) {
+        state = "publish_check_failed";
+      }
+    } else if (hasCommittedUnpublishedChanges) {
+      state = "needs_publish";
+      nextSteps.push("Publish the current bookmark with `jj git push --bookmark <name>`.");
+    }
+
+    const hasUnpushedCommits =
+      hasUncommittedChanges || ambiguous || hasCommittedUnpublishedChanges || Boolean(inspection?.error);
+
+    return {
+      vcs: "jj",
+      publishKind: "bookmark",
+      state,
+      ambiguous,
+      bookmarks,
+      primaryRef: bookmarks[0] ?? null,
+      remote: inspection?.remote ?? null,
+      checked: Boolean(inspection?.checked),
+      pendingBookmarks,
+      hasUncommittedChanges,
+      hasCommittedUnpublishedChanges,
+      hasUnpushedCommits,
+      needsCommitBeforePush: hasUncommittedChanges,
+      ready: !hasUnpushedCommits,
+      warnings,
+      nextSteps,
+      dryRunOutput: inspection?.raw ?? null,
+    };
+  }
 
   // For git, check if branch info says "ahead"
   let hasUnpushedCommits = false;
-  if (workingCopy?.vcs === "git" && typeof workingCopy.raw === "string") {
+  if (vcs === "git" && typeof workingCopy.raw === "string") {
     hasUnpushedCommits = /\bahead\b/i.test(workingCopy.raw);
   }
 
@@ -416,11 +490,31 @@ export function getPublishStatus(workingCopy, refContext) {
     hasUnpushedCommits = true;
   }
 
+  const branch = refContext?.branch ?? refContext?.primaryRef ?? null;
+  const hasCommittedUnpublishedChanges = !hasUncommittedChanges && hasUnpushedCommits;
+  const nextSteps = [];
+
+  if (hasUncommittedChanges) {
+    nextSteps.push("Review the working tree with `git status` and `git diff`.");
+    nextSteps.push("Create a commit before pushing.");
+  } else if (hasCommittedUnpublishedChanges) {
+    nextSteps.push("Push the current branch before requesting another review round.");
+  }
+
   return {
+    vcs,
+    publishKind: vcs === "git" ? "branch" : null,
+    state: hasUncommittedChanges ? "needs_commit" : hasUnpushedCommits ? "needs_publish" : "ready",
+    ambiguous: false,
+    branch,
+    primaryRef: branch,
     hasUncommittedChanges,
+    hasCommittedUnpublishedChanges,
     hasUnpushedCommits,
     needsCommitBeforePush: hasUncommittedChanges,
     ready: !hasUncommittedChanges && !hasUnpushedCommits,
+    warnings: [],
+    nextSteps,
   };
 }
 
@@ -432,6 +526,7 @@ export const REVIEW_LOOP_PHASES = {
   STARTING: "starting",
   NEEDS_PR: "needs_pr",
   NEEDS_REVIEWER: "needs_reviewer",
+  NEEDS_PUBLISH: "needs_publish",
   WAITING_FOR_REVIEW: "waiting_for_review",
   REVIEW_FEEDBACK_RECEIVED: "review_feedback_received",
   NEEDS_PUSH_REFILL: "needs_push_refill",
@@ -458,7 +553,7 @@ export function getReviewLoopPhase({
     return REVIEW_LOOP_PHASES.NEEDS_REVIEWER;
   }
 
-  if (satisfaction?.allSatisfied) {
+  if (satisfaction?.allSatisfied && !publishStatus?.hasUnpushedCommits) {
     return REVIEW_LOOP_PHASES.COMPLETED;
   }
 
@@ -468,6 +563,7 @@ export function getReviewLoopPhase({
   if (hasNewFeedback) {
     if (
       publishStatus?.hasUnpushedCommits &&
+      !publishStatus?.ambiguous &&
       (session?.pushesRemaining ?? 0) <= 0
     ) {
       return REVIEW_LOOP_PHASES.NEEDS_PUSH_REFILL;
@@ -475,11 +571,12 @@ export function getReviewLoopPhase({
     return REVIEW_LOOP_PHASES.REVIEW_FEEDBACK_RECEIVED;
   }
 
-  if (
-    publishStatus?.hasUnpushedCommits &&
-    (session?.pushesRemaining ?? 0) <= 0
-  ) {
-    return REVIEW_LOOP_PHASES.NEEDS_PUSH_REFILL;
+  if (publishStatus?.hasUnpushedCommits) {
+    if (!publishStatus?.ambiguous && (session?.pushesRemaining ?? 0) <= 0) {
+      return REVIEW_LOOP_PHASES.NEEDS_PUSH_REFILL;
+    }
+
+    return REVIEW_LOOP_PHASES.NEEDS_PUBLISH;
   }
 
   return REVIEW_LOOP_PHASES.WAITING_FOR_REVIEW;

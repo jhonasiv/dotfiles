@@ -131,6 +131,15 @@ function normalizeReviewerList(reviewers) {
     .filter(Boolean);
 }
 
+function normalizeSelectedReviewerList(reviewers) {
+  if (!Array.isArray(reviewers)) {
+    return null;
+  }
+
+  const normalized = reviewers.map((reviewer) => String(reviewer).trim()).filter(Boolean);
+  return normalized.length > 0 ? normalized : null;
+}
+
 function touchSession(session) {
   session.updatedAt = nowIso();
 }
@@ -707,22 +716,6 @@ function parsePrNumber(pr) {
   return parsed;
 }
 
-async function requirePrNumber(repo, cwd, pr) {
-  const parsed = parsePrNumber(pr);
-  if (parsed) {
-    return parsed;
-  }
-
-  const current = await getCurrentPullRequest(repo, cwd);
-  if (!current?.number) {
-    throw new Error(
-      "Could not determine the pull request for the current branch. Pass pr explicitly.",
-    );
-  }
-
-  return current.number;
-}
-
 async function requirePrNumberForAccess(access, context, pr) {
   const parsed = parsePrNumber(pr);
   if (parsed) {
@@ -1026,6 +1019,63 @@ async function requestReviewers(repo, prNumber, reviewers, cwd) {
   ]);
 }
 
+function parseJjPushDryRun(stdout, bookmarks) {
+  const normalizedBookmarks = Array.isArray(bookmarks) ? bookmarks.filter(Boolean) : [];
+  const pendingBookmarks = [];
+
+  for (const bookmark of normalizedBookmarks) {
+    const escaped = bookmark.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const pattern = new RegExp(`\\b(?:Move forward|Move sideways|Add|Delete|Forget)\\s+bookmark\\s+${escaped}\\b`);
+    if (pattern.test(stdout)) {
+      pendingBookmarks.push(bookmark);
+    }
+  }
+
+  return {
+    hasPendingChanges: pendingBookmarks.length > 0,
+    pendingBookmarks,
+    raw: stdout,
+  };
+}
+
+async function inspectJjPublishState(cwd, bookmarks) {
+  const result = {
+    checked: false,
+    remote: null,
+    hasPendingChanges: false,
+    pendingBookmarks: [],
+    raw: null,
+    error: null,
+  };
+
+  if (!Array.isArray(bookmarks) || bookmarks.length === 0) {
+    return result;
+  }
+
+  try {
+    const remotes = await getJjRemotes(cwd);
+    const remote = pickRemote(remotes, "origin")?.name ?? "origin";
+    const args = ["git", "push", "--remote", remote, "--dry-run"];
+    for (const bookmark of bookmarks) {
+      args.push("--bookmark", bookmark);
+    }
+
+    const { stdout } = await runJj(args, { cwd });
+    return {
+      ...result,
+      checked: true,
+      remote,
+      ...parseJjPushDryRun(stdout, bookmarks),
+    };
+  } catch (error) {
+    return {
+      ...result,
+      checked: true,
+      error: error.message,
+    };
+  }
+}
+
 async function getCurrentBranch(cwd) {
   const { stdout } = await runGit(["-C", cwd, "branch", "--show-current"], { cwd });
   return stdout || null;
@@ -1183,10 +1233,12 @@ async function getWorkingCopyStatus(vcs) {
 async function getCurrentRefContext(access) {
   if (access.vcs.kind === "jj") {
     const bookmarks = await getCurrentJjBookmarks(access.vcs.root);
+    const publishInspection = await inspectJjPublishState(access.vcs.root, bookmarks);
     return {
       vcs: "jj",
       bookmarks,
       primaryRef: bookmarks[0] ?? null,
+      publishInspection,
     };
   }
 
@@ -1403,6 +1455,15 @@ async function collectWorkflowSnapshot(access, context, prNumber, reviewerFilter
     refContext,
     publishStatus,
   };
+}
+
+function deriveSelectedReviewers(session, currentReviewers) {
+  const persisted = normalizeSelectedReviewerList(session?.selectedReviewers);
+  if (persisted) {
+    return persisted;
+  }
+
+  return normalizeSelectedReviewerList(currentReviewers) ?? [];
 }
 
 const POLL_INTERVAL_MS = 30_000;
@@ -1622,6 +1683,7 @@ export const session = tool({
 
       if (args.default_reviewers !== undefined) {
         sessionData.defaultReviewers = normalizeReviewerList(args.default_reviewers);
+        sessionData.selectedReviewers = normalizeSelectedReviewerList(args.default_reviewers);
       }
 
       if (args.notes !== undefined) {
@@ -1714,7 +1776,7 @@ export const whitelist = tool({
 
 export const prs = tool({
   description:
-    "List open pull requests, inspect the current branch pull request, or view a specific pull request in a whitelisted repo.",
+    "List open pull requests, inspect the current branch or bookmark pull request, or view a specific pull request in a whitelisted repo.",
   args: {
     operation: tool.schema
       .enum(["list_open", "current", "view"])
@@ -1727,7 +1789,7 @@ export const prs = tool({
       .number()
       .int()
       .optional()
-      .describe("Pull request number for view. Defaults to the current branch PR when omitted."),
+      .describe("Pull request number for view. Defaults to the current branch or bookmark PR when omitted."),
     state: tool.schema
       .enum(["open", "closed", "all"])
       .optional()
@@ -1834,7 +1896,7 @@ export const reviews = tool({
       .number()
       .int()
       .optional()
-      .describe("Pull request number. Defaults to the current branch PR for read operations."),
+      .describe("Pull request number. Defaults to the current branch or bookmark PR for read operations."),
     thread_id: tool.schema
       .string()
       .optional()
@@ -1931,7 +1993,7 @@ export const comment = tool({
       .number()
       .int()
       .optional()
-      .describe("Pull request number for comment_pr. Defaults to the current branch PR."),
+      .describe("Pull request number for comment_pr. Defaults to the current branch or bookmark PR."),
     comment_id: tool.schema
       .number()
       .int()
@@ -2017,7 +2079,7 @@ export const request_review = tool({
       .number()
       .int()
       .optional()
-      .describe("Pull request number. Defaults to the current branch PR."),
+      .describe("Pull request number. Defaults to the current branch or bookmark PR."),
     reviewers: tool.schema
       .array(tool.schema.string())
       .optional()
@@ -2051,6 +2113,7 @@ export const request_review = tool({
       sessionData.reviewRoundsUsed += 1;
       sessionData.awaitingReviewUpdates = true;
       sessionData.lastReviewRequestedAt = nowIso();
+      sessionData.selectedReviewers = normalizeSelectedReviewerList(reviewers);
       touchSession(sessionData);
     });
 
@@ -2066,7 +2129,7 @@ export const request_review = tool({
 
 export const push = tool({
   description:
-    "Push the current branch to GitHub while consuming the repo session push budget managed by gh_repo_session.",
+    "Push the current branch or bookmark to GitHub while consuming the repo session push budget managed by gh_repo_session.",
   args: {
     repo: tool.schema
       .string()
@@ -2079,11 +2142,11 @@ export const push = tool({
     branch: tool.schema
       .string()
       .optional()
-      .describe("Optional branch name. Defaults to the current branch or upstream branch."),
+      .describe("Optional branch or bookmark name. Defaults to the current branch, upstream branch, or bookmark at @."),
     set_upstream: tool.schema
       .boolean()
       .optional()
-      .describe("Set upstream while pushing, useful for the first push of a new branch."),
+      .describe("Set upstream while pushing, useful for the first push of a new Git branch."),
     dry_run: tool.schema
       .boolean()
       .optional()
@@ -2104,6 +2167,7 @@ export const push = tool({
         const sessionData = ensureSession(state, context.sessionID, access.repo);
         sessionData.pushesRemaining = Math.max(0, sessionData.pushesRemaining - 1);
         sessionData.pushesUsed += 1;
+        sessionData.lastPublishedChangeAt = nowIso();
         touchSession(sessionData);
       });
     }
@@ -2119,7 +2183,7 @@ export const push = tool({
 
 export const summary = tool({
   description:
-    "Summarize the current or specified pull request, including review state, unresolved threads, status checks, and remaining push budget.",
+    "Summarize the current or specified pull request, including review state, unresolved threads, status checks, publish state, and remaining push budget.",
   args: {
     repo: tool.schema
       .string()
@@ -2129,7 +2193,7 @@ export const summary = tool({
       .number()
       .int()
       .optional()
-      .describe("Pull request number. Defaults to the current branch PR."),
+      .describe("Pull request number. Defaults to the current branch or bookmark PR."),
     reviewer: tool.schema
       .string()
       .optional()
@@ -2187,12 +2251,18 @@ export const summary = tool({
       threads = threads.filter((thread) => !thread.isResolved);
     }
     threads = filterThreadsByReviewer(threads, args.reviewer);
+    const workingCopy = await getWorkingCopyStatus(access.vcs);
+    const refContext = await getCurrentRefContext(access);
+    const publishStatus = getPublishStatus(workingCopy, refContext);
 
     return stringify({
       kind: "gh_repo_summary",
       repo: access.repo,
       whitelist: whitelistSnapshot(access.state, access.repo),
       session: sessionSnapshot(access.session, access.repo),
+      workingCopy,
+      refContext,
+      publishStatus,
       pullRequest,
       unresolvedOnly: args.unresolved_only !== false,
       reviewerFilter: args.reviewer ?? null,
@@ -2306,7 +2376,7 @@ export const workflow = tool({
         access.vcs.root || context.worktree,
       );
 
-      const selectedReviewers = access.session?.selectedReviewers ?? currentReviewers;
+      const selectedReviewers = deriveSelectedReviewers(access.session, currentReviewers);
       const lastPublishedChangeAt = access.session?.lastPublishedChangeAt ?? null;
 
       const satisfaction = evaluateReviewerSatisfaction({
@@ -2333,6 +2403,7 @@ export const workflow = tool({
       await persistStateMutation(access, async (state) => {
         const sd = ensureSession(state, context.sessionID, access.repo);
         sd.reviewLoopPhase = phase;
+        sd.selectedReviewers = normalizeSelectedReviewerList(selectedReviewers);
         touchSession(sd);
       });
 
@@ -2364,6 +2435,7 @@ export const workflow = tool({
       if (
         phase === REVIEW_LOOP_PHASES.NEEDS_REVIEWER ||
         phase === REVIEW_LOOP_PHASES.NEEDS_PR ||
+        phase === REVIEW_LOOP_PHASES.NEEDS_PUBLISH ||
         phase === REVIEW_LOOP_PHASES.REVIEW_FEEDBACK_RECEIVED ||
         phase === REVIEW_LOOP_PHASES.NEEDS_PUSH_REFILL
       ) {
@@ -2508,6 +2580,9 @@ export const workflow = tool({
     );
     const workingCopy = await getWorkingCopyStatus(access.vcs);
     const refContext = await getCurrentRefContext(access);
+    const publishStatus = getPublishStatus(workingCopy, refContext);
+    const currentReviewers = normalizeRequestedReviewers(pullRequest);
+    const selectedReviewers = deriveSelectedReviewers(access.session, currentReviewers);
 
     const baseResult = {
       kind: "gh_repo_workflow",
@@ -2515,6 +2590,9 @@ export const workflow = tool({
       session: sessionSnapshot(access.session, access.repo),
       workingCopy,
       refContext,
+      publishStatus,
+      currentReviewers,
+      selectedReviewers,
       pullRequest,
       checks,
       reviewerUpdates,
@@ -2528,6 +2606,7 @@ export const workflow = tool({
       pullRequest,
       workingCopy,
       reviewerUpdates,
+      publishStatus,
     });
 
     let stopReasons = getWorkflowStopReasons({
@@ -2535,6 +2614,7 @@ export const workflow = tool({
       unresolvedThreadCount: unresolvedThreads.length,
       pullRequest,
       workingCopy,
+      publishStatus,
       checksPass: checks.passing,
       reviewerUpdates,
       afterRequestReview: false,
@@ -2625,6 +2705,7 @@ export const workflow = tool({
         const sessionData = ensureSession(state, context.sessionID, access.repo);
         sessionData.pushesRemaining = Math.max(0, sessionData.pushesRemaining - 1);
         sessionData.pushesUsed += 1;
+        sessionData.lastPublishedChangeAt = nowIso();
         touchSession(sessionData);
       });
       performedAction = "push_changes";
@@ -2645,6 +2726,7 @@ export const workflow = tool({
           sessionData.reviewRoundsUsed += 1;
           sessionData.awaitingReviewUpdates = true;
           sessionData.lastReviewRequestedAt = nowIso();
+          sessionData.selectedReviewers = normalizeSelectedReviewerList(reviewers);
           touchSession(sessionData);
         });
         performedAction = "request_review";
@@ -2652,6 +2734,8 @@ export const workflow = tool({
     }
 
     const refreshedWorkingCopy = await getWorkingCopyStatus(access.vcs);
+    const refreshedRefContext = await getCurrentRefContext(access);
+    const refreshedPublishStatus = getPublishStatus(refreshedWorkingCopy, refreshedRefContext);
     const refreshedPullRequest = await getPrView(
       access.repo,
       access.vcs.root || context.worktree,
@@ -2701,6 +2785,7 @@ export const workflow = tool({
       pullRequest: refreshedPullRequest,
       workingCopy: refreshedWorkingCopy,
       reviewerUpdates: refreshedReviewerUpdates,
+      publishStatus: refreshedPublishStatus,
     });
 
     stopReasons = getWorkflowStopReasons({
@@ -2708,6 +2793,7 @@ export const workflow = tool({
       unresolvedThreadCount: refreshedUnresolvedThreads.length,
       pullRequest: refreshedPullRequest,
       workingCopy: refreshedWorkingCopy,
+       publishStatus: refreshedPublishStatus,
       checksPass: refreshedChecks.passing,
       reviewerUpdates: refreshedReviewerUpdates,
       afterRequestReview: performedAction === "request_review",
@@ -2718,7 +2804,8 @@ export const workflow = tool({
       repo: access.repo,
       session: sessionSnapshot(access.session, access.repo),
       workingCopy: refreshedWorkingCopy,
-      refContext,
+      refContext: refreshedRefContext,
+      publishStatus: refreshedPublishStatus,
       pullRequest: refreshedPullRequest,
       checks: refreshedChecks,
       reviewerUpdates: refreshedReviewerUpdates,
