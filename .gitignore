@@ -15,3 +15,5 @@ nvim/lua/plugins.bak/*
 *.lock
 plans/
 secrets.zsh
+gh-workflow-state.json
+package.json

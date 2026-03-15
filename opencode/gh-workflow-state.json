@@ -1,0 +1,114 @@
+{
+  "version": 1,
+  "whitelist": {
+    "jhonasiv/jjlab-streaming": {
+      "addedAt": "2026-03-12T22:03:25.055Z"
+    }
+  },
+  "sessions": {
+    "ses_31b14a614ffeG71p79lptj68H8": {
+      "jhonasiv/jjlab-streaming": {
+        "configured": true,
+        "pushesRemaining": 0,
+        "pushesUsed": 0,
+        "reviewRoundsRemaining": 20,
+        "reviewRoundsUsed": 0,
+        "awaitingReviewUpdates": false,
+        "lastReviewRequestedAt": null,
+        "stopWhenNoUnresolvedThreads": false,
+        "stopWhenApproved": true,
+        "stopWhenChecksPass": false,
+        "defaultReviewers": [
+          "@copilot"
+        ],
+        "notes": null,
+        "reviewLoopActive": true,
+        "reviewLoopPhase": "needs_reviewer",
+        "prNumber": 1,
+        "prUrl": "https://github.com/jhonasiv/jjlab-streaming/pull/1",
+        "selectedReviewers": null,
+        "lastPublishedChangeAt": null,
+        "createdAt": "2026-03-13T01:59:52.148Z",
+        "updatedAt": "2026-03-13T11:06:00.507Z"
+      }
+    },
+    "ses_31906563bffeoIuWqgNgokaJUV": {
+      "jhonasiv/jjlab-streaming": {
+        "configured": true,
+        "pushesRemaining": 3,
+        "pushesUsed": 0,
+        "reviewRoundsRemaining": 2,
+        "reviewRoundsUsed": 1,
+        "awaitingReviewUpdates": false,
+        "lastReviewRequestedAt": "2026-03-14T14:17:01.701Z",
+        "stopWhenNoUnresolvedThreads": true,
+        "stopWhenApproved": true,
+        "stopWhenChecksPass": true,
+        "defaultReviewers": [
+          "@copilot"
+        ],
+        "notes": "Issue #3 follow-up stacked from render-hardening into render-test-harness / PR #5",
+        "reviewLoopActive": true,
+        "reviewLoopPhase": "needs_reviewer",
+        "prNumber": 5,
+        "prUrl": "https://github.com/jhonasiv/jjlab-streaming/pull/5",
+        "selectedReviewers": null,
+        "lastPublishedChangeAt": null,
+        "createdAt": "2026-03-14T14:06:52.965Z",
+        "updatedAt": "2026-03-14T14:25:29.529Z"
+      }
+    },
+    "ses_313538cf5ffeqjDoWC2R58VmlR": {
+      "jhonasiv/jjlab-streaming": {
+        "configured": true,
+        "pushesRemaining": 3,
+        "pushesUsed": 0,
+        "reviewRoundsRemaining": 19,
+        "reviewRoundsUsed": 1,
+        "awaitingReviewUpdates": true,
+        "lastReviewRequestedAt": "2026-03-14T14:14:12.055Z",
+        "stopWhenNoUnresolvedThreads": false,
+        "stopWhenApproved": true,
+        "stopWhenChecksPass": false,
+        "defaultReviewers": [
+          "@copilot"
+        ],
+        "notes": "Automated review loop for existing PR #5 from render-test-harness to master; local work uses jj bookmarks.",
+        "reviewLoopActive": true,
+        "reviewLoopPhase": "needs_reviewer",
+        "prNumber": 5,
+        "prUrl": "https://github.com/jhonasiv/jjlab-streaming/pull/5",
+        "selectedReviewers": null,
+        "lastPublishedChangeAt": null,
+        "createdAt": "2026-03-14T14:13:49.585Z",
+        "updatedAt": "2026-03-14T14:14:12.055Z"
+      }
+    },
+    "ses_3133c72ccffeeAoQ4YOM0ISrvx": {
+      "jhonasiv/jjlab-streaming": {
+        "configured": true,
+        "pushesRemaining": 4,
+        "pushesUsed": 1,
+        "reviewRoundsRemaining": 19,
+        "reviewRoundsUsed": 1,
+        "awaitingReviewUpdates": true,
+        "lastReviewRequestedAt": "2026-03-14T15:40:47.981Z",
+        "stopWhenNoUnresolvedThreads": false,
+        "stopWhenApproved": true,
+        "stopWhenChecksPass": false,
+        "defaultReviewers": [
+          "@copilot"
+        ],
+        "notes": "selectedReviewers=@copilot",
+        "reviewLoopActive": true,
+        "reviewLoopPhase": "needs_reviewer",
+        "prNumber": 5,
+        "prUrl": "https://github.com/jhonasiv/jjlab-streaming/pull/5",
+        "selectedReviewers": null,
+        "lastPublishedChangeAt": null,
+        "createdAt": "2026-03-14T14:33:01.227Z",
+        "updatedAt": "2026-03-14T15:42:37.143Z"
+      }
+    }
+  }
+}
